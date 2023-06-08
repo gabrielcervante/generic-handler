@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"gin-handler/handlers"
+	"github.com/gabrielcervante/gin-handler/handlers"
 	"github.com/gin-gonic/gin"
 )
 
