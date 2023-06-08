@@ -1,4 +1,4 @@
-module gin-handler
+module github.com/gabrielcervante/gin-handler
 
 go 1.20
 

@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"gin-handler/types"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gabrielcervante/gin-handler/types"
+	"github.com/gin-gonic/gin"
 )
 
 type handler[I, O any] struct {
