@@ -1,13 +1,14 @@
-package main
+package example
 
 import (
 	"context"
 	"errors"
+
 	"github.com/gabrielcervante/gin-handler/handlers"
 	"github.com/gin-gonic/gin"
 )
 
-func main() {
+func Example() {
 	err := handlers.SaveErrors(handlers.Errors{ErrorMessage: "Sorry error in string", ErrorStatusCode: 500, ErrorReturnMessage: "Something went wrong"},
 		handlers.Errors{ErrorMessage: "Sorry error in int", ErrorStatusCode: 404})
 	if err != nil {
