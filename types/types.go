@@ -2,10 +2,13 @@ package types
 
 import (
 	"context"
+
 	"github.com/gin-gonic/gin"
 )
 
 type InputFunction[I, O any] func(context.Context, I) (O, error)
+
+type OutputFunction[O any] func(context.Context) (O, error)
 
 type ErrorHandler func(string) (string, int)
 

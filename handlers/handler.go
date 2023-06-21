@@ -12,6 +12,22 @@ type handler[I, O any] struct {
 	successHandler types.SuccessHandler
 }
 
+func (h handler[I, O]) Handle(fn types.OutputFunction[O]) func(*gin.Context) {
+	return func(c *gin.Context) {
+
+		output, err := fn(c)
+		if err != nil {
+			errorMessage, statusCode := h.errorHandler(err.Error())
+			c.JSON(statusCode, errorMessage)
+			return
+		}
+
+		successMessage, successesStatusCode := h.successHandler(output)
+		c.JSON(successesStatusCode, successMessage)
+		return
+	}
+}
+
 func (h handler[I, O]) HandleJSON(fn types.InputFunction[I, O]) func(*gin.Context) {
 	return func(c *gin.Context) {
 		var input I
