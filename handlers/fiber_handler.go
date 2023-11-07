@@ -9,7 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type fiberHandler[I, O any] struct {
+type fiberHandler[I, O comparable] struct {
 	errorHandler   customerrors.Errors
 	successHandler success.Success
 }
@@ -25,7 +25,7 @@ func (h fiberHandler[I, O]) Handle(fn any) func(*fiber.Ctx) error {
 		}
 
 		successesStatusCode := h.successHandler.ReturnSuccess(*new(I))
-		return c.Status(successesStatusCode).JSON(output)
+		return h.fiberOutPut(c, output, successesStatusCode)
 	}
 }
 
@@ -46,7 +46,7 @@ func (h fiberHandler[I, O]) HandleJSON(fn any) func(*fiber.Ctx) error {
 		}
 
 		successesStatusCode := h.successHandler.ReturnSuccess(*new(I))
-		return c.Status(successesStatusCode).JSON(output)
+		return h.fiberOutPut(c, output, successesStatusCode)
 	}
 }
 
@@ -67,7 +67,7 @@ func (h fiberHandler[I, O]) HandleParam(param string, fn any) func(*fiber.Ctx) e
 		}
 
 		successesStatusCode := h.successHandler.ReturnSuccess(*new(I))
-		return c.Status(successesStatusCode).JSON(output)
+		return h.fiberOutPut(c, output, successesStatusCode)
 	}
 }
 
@@ -87,10 +87,18 @@ func (h fiberHandler[I, O]) HandleQuery(query string, fn any) func(*fiber.Ctx) e
 		}
 
 		successesStatusCode := h.successHandler.ReturnSuccess(*new(I))
-		return c.Status(successesStatusCode).JSON(output)
+		return h.fiberOutPut(c, output, successesStatusCode)
 	}
 }
 
-func NewFiberHandler[I, O any](errorHandler customerrors.Errors, successHandler success.Success) types.FiberHandler[I, O] {
+func (fiberHandler[I, O]) fiberOutPut(ctx *fiber.Ctx, output O, statusCode int) error {
+	if output == *new(O) {
+		return ctx.SendStatus(statusCode)
+	}
+
+	return ctx.Status(statusCode).JSON(output)
+}
+
+func NewFiberHandler[I, O comparable](errorHandler customerrors.Errors, successHandler success.Success) types.FiberHandler[I, O] {
 	return fiberHandler[I, O]{errorHandler: errorHandler, successHandler: successHandler}
 }

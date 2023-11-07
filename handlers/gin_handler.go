@@ -9,16 +9,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ginHandler[I, O any] struct {
+type ginHandler[I, O comparable] struct {
 	errorHandler   customerrors.Errors
 	successHandler success.Success
 }
 
 func (h ginHandler[I, O]) Handle(fn any) func(*gin.Context) {
 	return func(c *gin.Context) {
-		var input I
-
-		output, err := utils.FindFuncType[I, O](c, input, fn)
+		output, err := utils.FindFuncType[I, O](c, *new(I), fn)
 		if err != nil {
 			errorMessage, statusCode := h.errorHandler.ReturnError(err)
 			c.JSON(statusCode, errorMessage)
@@ -26,8 +24,7 @@ func (h ginHandler[I, O]) Handle(fn any) func(*gin.Context) {
 		}
 
 		successesStatusCode := h.successHandler.ReturnSuccess(*new(I))
-		c.JSON(successesStatusCode, output)
-		return
+		h.ginOutPut(c, output, successesStatusCode)
 	}
 }
 
@@ -50,8 +47,7 @@ func (h ginHandler[I, O]) HandleJSON(fn any) func(*gin.Context) {
 		}
 
 		successesStatusCode := h.successHandler.ReturnSuccess(*new(I))
-		c.JSON(successesStatusCode, output)
-		return
+		h.ginOutPut(c, output, successesStatusCode)
 	}
 }
 
@@ -74,8 +70,7 @@ func (h ginHandler[I, O]) HandleParam(param string, fn any) func(*gin.Context) {
 		}
 
 		successesStatusCode := h.successHandler.ReturnSuccess(*new(I))
-		c.JSON(successesStatusCode, output)
-		return
+		h.ginOutPut(c, output, successesStatusCode)
 	}
 }
 
@@ -97,11 +92,18 @@ func (h ginHandler[I, O]) HandleQuery(query string, fn any) func(*gin.Context) {
 		}
 
 		successesStatusCode := h.successHandler.ReturnSuccess(*new(I))
-		c.JSON(successesStatusCode, output)
-		return
+		h.ginOutPut(c, output, successesStatusCode)
 	}
 }
 
-func NewGinHandler[I, O any](errorHandler customerrors.Errors, successHandler success.Success) types.GinHandler[I, O] {
+func (ginHandler[I, O]) ginOutPut(ctx *gin.Context, output O, statusCode int) {
+	if output == *new(O) {
+		ctx.Status(statusCode)
+	}
+
+	ctx.JSON(statusCode, output)
+}
+
+func NewGinHandler[I, O comparable](errorHandler customerrors.Errors, successHandler success.Success) types.GinHandler[I, O] {
 	return ginHandler[I, O]{errorHandler: errorHandler, successHandler: successHandler}
 }
