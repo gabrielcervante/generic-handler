@@ -4,18 +4,23 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
 type InputFunction[I, O any] func(context.Context, I) (O, error)
 
 type OutputFunction[O any] func(context.Context) (O, error)
 
-type ErrorHandler func(string) (string, int)
+type ErrorFunction[I any] func(context.Context, I) error
 
-type SuccessHandler func(any) (any, int)
+type GinHandler[I, O any] interface {
+	HandleJSON(any) func(*gin.Context)
+	HandleParam(string, any) func(*gin.Context)
+	HandleQuery(string, any) func(*gin.Context)
+}
 
-type Handler[I, O any] interface {
-	HandleJSON(InputFunction[I, O]) func(*gin.Context)
-	HandleParam(string, InputFunction[I, O]) func(*gin.Context)
-	HandleQuery(string, InputFunction[I, O]) func(*gin.Context)
+type FiberHandler[I, O any] interface {
+	HandleJSON(any) func(*fiber.Ctx) error
+	HandleParam(string, any) func(*fiber.Ctx) error
+	HandleQuery(string, any) func(*fiber.Ctx) error
 }

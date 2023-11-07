@@ -4,34 +4,62 @@ import (
 	"context"
 	"errors"
 
-	"github.com/gabrielcervante/gin-handler/handlers"
+	customerrors "github.com/gabrielcervante/handler/custom_errors"
+	"github.com/gabrielcervante/handler/handlers"
+	"github.com/gabrielcervante/handler/success"
 	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
 )
 
-func Example() {
-	err := handlers.SaveErrors(handlers.Errors{ErrorMessage: "Sorry error in string", ErrorStatusCode: 500, ErrorReturnMessage: "Something went wrong"},
-		handlers.Errors{ErrorMessage: "Sorry error in int", ErrorStatusCode: 404})
-	if err != nil {
-		return
-	}
+func FiberExample() {
+	customErrors := customerrors.AddErrors(map[string]customerrors.CustomErrors{
+		"Sorry error in string": {Error: "Something went wrong", StatusCode: 500},
+		"Sorry error in int":    {StatusCode: 404},
+	}, 505)
 
-	err = handlers.SaveSuccesses(handlers.Successes{SuccessMessage: "", SuccessStatusCode: 201},
-		handlers.Successes{SuccessMessage: customType{}, SuccessStatusCode: 200})
+	successes := success.AddSuccesses(map[any]int{
+		"":           201,
+		customType{}: 200,
+	}, 505)
+
+	r := fiber.New()
+
+	r.Get("/string/:str", handlers.NewFiberHandler[string, string](customErrors, successes).HandleParam("str", respondMessageString))
+	r.Get("/str", handlers.NewFiberHandler[string, string](customErrors, successes).HandleParam("string", errorMessageString))
+	r.Get("/int", handlers.NewFiberHandler[int, int](customErrors, successes).HandleQuery("integer", errorMessageInt))
+
+	postHandlers := handlers.NewFiberHandler[customType, customType](customErrors, successes)
+
+	r.Post("/custom", postHandlers.HandleJSON(respondMessageCustomType))
+
+	err := r.Listen(":8080")
 	if err != nil {
 		return
 	}
+}
+
+func GinExample() {
+	customErrors := customerrors.AddErrors(map[string]customerrors.CustomErrors{
+		"Sorry error in string": {Error: "Something went wrong", StatusCode: 500},
+		"Sorry error in int":    {StatusCode: 404},
+	}, 505)
+
+	successes := success.AddSuccesses(map[any]int{
+		"":           201,
+		customType{}: 200,
+	}, 505)
 
 	r := gin.Default()
 
-	r.GET("/string/:str", handlers.Newhandler[string, string](nil, nil).HandleParam("str", respondMessageString))
-	r.GET("/str", handlers.Newhandler[string, string](nil, nil).HandleParam("string", errorMessageString))
-	r.GET("/int", handlers.Newhandler[int, int](nil, nil).HandleQuery("integer", errorMessageInt))
+	r.GET("/string/:str", handlers.NewGinHandler[string, string](customErrors, successes).HandleParam("str", respondMessageString))
+	r.GET("/str", handlers.NewGinHandler[string, string](customErrors, successes).HandleParam("string", errorMessageString))
+	r.GET("/int", handlers.NewGinHandler[int, int](customErrors, successes).HandleQuery("integer", errorMessageInt))
 
-	postHandlers := handlers.Newhandler[customType, customType](nil, nil)
+	postHandlers := handlers.NewGinHandler[customType, customType](customErrors, successes)
 
 	r.POST("/custom", postHandlers.HandleJSON(respondMessageCustomType))
 
-	err = r.Run()
+	err := r.Run()
 	if err != nil {
 		return
 	}
