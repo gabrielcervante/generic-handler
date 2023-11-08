@@ -104,6 +104,9 @@ func (ginHandler[Converter, I, O]) ginOutPut(ctx *gin.Context, output O, statusC
 	ctx.JSON(statusCode, output)
 }
 
-func NewGinHandler[Converter, I, O comparable](errorHandler customerrors.Errors, successHandler success.Success, convert converter.Converter[Converter]) types.GinHandler[Converter, I, O] {
-	return ginHandler[Converter, I, O]{errorHandler: errorHandler, successHandler: successHandler, convert: convert}
+func NewGinHandler[Converter, I, O comparable](errorHandler customerrors.Errors, successHandler success.Success, convert ...converter.Converter[Converter]) types.GinHandler[Converter, I, O] {
+	if convert != nil {
+		return ginHandler[Converter, I, O]{errorHandler: errorHandler, successHandler: successHandler, convert: convert[0]}
+	}
+	return ginHandler[Converter, I, O]{errorHandler: errorHandler, successHandler: successHandler, convert: converter.Converter[Converter]{}}
 }

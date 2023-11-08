@@ -97,6 +97,9 @@ func (fiberHandler[Converter, I, O]) fiberOutPut(ctx *fiber.Ctx, output O, statu
 	return ctx.Status(statusCode).JSON(output)
 }
 
-func NewFiberHandler[Converter, I, O comparable](errorHandler customerrors.Errors, successHandler success.Success, convert converter.Converter[Converter]) types.FiberHandler[Converter, I, O] {
-	return fiberHandler[Converter, I, O]{errorHandler: errorHandler, successHandler: successHandler, convert: convert}
+func NewFiberHandler[Converter, I, O comparable](errorHandler customerrors.Errors, successHandler success.Success, convert ...converter.Converter[Converter]) types.FiberHandler[Converter, I, O] {
+	if convert != nil {
+		return fiberHandler[Converter, I, O]{errorHandler: errorHandler, successHandler: successHandler, convert: convert[0]}
+	}
+	return fiberHandler[Converter, I, O]{errorHandler: errorHandler, successHandler: successHandler, convert: converter.Converter[Converter]{}}
 }
