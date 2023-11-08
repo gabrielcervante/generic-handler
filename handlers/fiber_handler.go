@@ -8,13 +8,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type fiberHandler[Converter, I, O comparable] struct {
+type fiberHandler[I, O comparable] struct {
 	errorHandler   customerrors.Errors
 	successHandler success.Success
-	convert        converter.Converter[Converter]
+	convert        converter.Converter[I]
 }
 
-func (h fiberHandler[Converter, I, O]) Handle(fn types.InputFunction[I, O]) func(*fiber.Ctx) error {
+func (h fiberHandler[I, O]) Handle(fn types.InputFunction[I, O]) func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		output, err := fn(c.Context(), *new(I))
 		if err != nil {
@@ -27,7 +27,7 @@ func (h fiberHandler[Converter, I, O]) Handle(fn types.InputFunction[I, O]) func
 	}
 }
 
-func (h fiberHandler[Converter, I, O]) HandleJSON(fn types.InputFunction[I, O]) func(*fiber.Ctx) error {
+func (h fiberHandler[I, O]) HandleJSON(fn types.InputFunction[I, O]) func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		var input I
 
@@ -48,7 +48,7 @@ func (h fiberHandler[Converter, I, O]) HandleJSON(fn types.InputFunction[I, O]) 
 	}
 }
 
-func (h fiberHandler[Converter, I, O]) HandleParam(param string, fn types.InputFunction[I, O]) func(*fiber.Ctx) error {
+func (h fiberHandler[I, O]) HandleParam(param string, fn types.InputFunction[I, O]) func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		input := c.Params(param)
 
@@ -69,7 +69,7 @@ func (h fiberHandler[Converter, I, O]) HandleParam(param string, fn types.InputF
 	}
 }
 
-func (h fiberHandler[Converter, I, O]) HandleQuery(query string, fn types.InputFunction[I, O]) func(*fiber.Ctx) error {
+func (h fiberHandler[I, O]) HandleQuery(query string, fn types.InputFunction[I, O]) func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		input := c.Query(query)
 
@@ -89,7 +89,7 @@ func (h fiberHandler[Converter, I, O]) HandleQuery(query string, fn types.InputF
 	}
 }
 
-func (fiberHandler[Converter, I, O]) fiberOutPut(ctx *fiber.Ctx, output O, statusCode int) error {
+func (fiberHandler[I, O]) fiberOutPut(ctx *fiber.Ctx, output O, statusCode int) error {
 	if output == *new(O) {
 		return ctx.SendStatus(statusCode)
 	}
@@ -97,9 +97,9 @@ func (fiberHandler[Converter, I, O]) fiberOutPut(ctx *fiber.Ctx, output O, statu
 	return ctx.Status(statusCode).JSON(output)
 }
 
-func NewFiberHandler[Converter, I, O comparable](errorHandler customerrors.Errors, successHandler success.Success, convert ...converter.Converter[Converter]) types.FiberHandler[Converter, I, O] {
+func NewFiberHandler[I, O comparable](errorHandler customerrors.Errors, successHandler success.Success, convert ...converter.Converter[I]) types.FiberHandler[I, O] {
 	if convert != nil {
-		return fiberHandler[Converter, I, O]{errorHandler: errorHandler, successHandler: successHandler, convert: convert[0]}
+		return fiberHandler[I, O]{errorHandler: errorHandler, successHandler: successHandler, convert: convert[0]}
 	}
-	return fiberHandler[Converter, I, O]{errorHandler: errorHandler, successHandler: successHandler, convert: converter.Converter[Converter]{}}
+	return fiberHandler[I, O]{errorHandler: errorHandler, successHandler: successHandler, convert: converter.Converter[I]{}}
 }

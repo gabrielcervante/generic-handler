@@ -30,13 +30,13 @@ func FiberExample() {
 
 	r := fiber.New()
 
-	r.Get("/string/:str", handlers.NewFiberHandler[string, string, string](customErrors, successes).HandleParam("str", respondMessageString))
-	r.Get("/str", handlers.NewFiberHandler[string, string, string](customErrors, successes).HandleParam("string", errorMessageString))
-	r.Get("/int", handlers.NewFiberHandler[int, int, int](customErrors, successes, convert).HandleQuery("integer", errorMessageInt))
-	r.Get("/int", handlers.NewFiberHandler[string, struct{}, string](customErrors, successes).Handle(adapter.NoInput[struct{}, string](testNoInput)))
-	r.Get("/int", handlers.NewFiberHandler[string, string, struct{}](customErrors, successes).HandleQuery("integer", adapter.NoOutput[string, struct{}](testNoOutput)))
+	r.Get("/string/:str", handlers.NewFiberHandler[string, string](customErrors, successes).HandleParam("str", respondMessageString))
+	r.Get("/str", handlers.NewFiberHandler[string, string](customErrors, successes).HandleParam("string", errorMessageString))
+	r.Get("/int", handlers.NewFiberHandler[int, int](customErrors, successes, convert).HandleQuery("integer", errorMessageInt))
+	r.Get("/int", handlers.NewFiberHandler[struct{}, string](customErrors, successes).Handle(adapter.NoInput[struct{}, string](testNoInput)))
+	r.Get("/int", handlers.NewFiberHandler[string, struct{}](customErrors, successes).HandleQuery("integer", adapter.NoOutput[string, struct{}](testNoOutput)))
 
-	postHandlers := handlers.NewFiberHandler[customType, customType, customType](customErrors, successes, converter.Converter[customType]{})
+	postHandlers := handlers.NewFiberHandler[customType, customType](customErrors, successes, converter.Converter[customType]{})
 
 	r.Post("/custom", postHandlers.HandleJSON(respondMessageCustomType))
 
@@ -61,13 +61,13 @@ func GinExample() {
 
 	r := gin.Default()
 
-	r.GET("/string/:str", handlers.NewGinHandler[string, string, string](customErrors, successes).HandleParam("str", respondMessageString))
-	r.GET("/str", handlers.NewGinHandler[string, string, string](customErrors, successes).HandleParam("string", errorMessageString))
-	r.GET("/int", handlers.NewGinHandler[int, int, int](customErrors, successes, convert).HandleQuery("integer", errorMessageInt))
-	r.GET("/int", handlers.NewGinHandler[struct{}, struct{}, string](customErrors, successes).Handle(adapter.NoInput[struct{}, string](testNoInput)))
-	r.GET("/int", handlers.NewGinHandler[string, string, struct{}](customErrors, successes).HandleQuery("integer", adapter.NoOutput[string, struct{}](testNoOutput)))
+	r.GET("/string/:str", handlers.NewGinHandler[string, string](customErrors, successes).HandleParam("str", respondMessageString))
+	r.GET("/str", handlers.NewGinHandler[string, string](customErrors, successes).HandleParam("string", errorMessageString))
+	r.GET("/int", handlers.NewGinHandler[int, int](customErrors, successes, convert).HandleQuery("integer", errorMessageInt))
+	r.GET("/int", handlers.NewGinHandler[struct{}, string](customErrors, successes).Handle(adapter.NoInput[struct{}, string](testNoInput)))
+	r.GET("/int", handlers.NewGinHandler[string, struct{}](customErrors, successes).HandleQuery("integer", adapter.NoOutput[string, struct{}](testNoOutput)))
 
-	postHandlers := handlers.NewGinHandler[customType, customType, customType](customErrors, successes)
+	postHandlers := handlers.NewGinHandler[customType, customType](customErrors, successes)
 
 	r.POST("/custom", postHandlers.HandleJSON(respondMessageCustomType))
 

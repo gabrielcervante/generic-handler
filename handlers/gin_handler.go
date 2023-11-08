@@ -8,13 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ginHandler[Converter, I, O comparable] struct {
+type ginHandler[I, O comparable] struct {
 	errorHandler   customerrors.Errors
 	successHandler success.Success
-	convert        converter.Converter[Converter]
+	convert        converter.Converter[I]
 }
 
-func (h ginHandler[Converter, I, O]) Handle(fn types.InputFunction[I, O]) func(*gin.Context) {
+func (h ginHandler[I, O]) Handle(fn types.InputFunction[I, O]) func(*gin.Context) {
 	return func(c *gin.Context) {
 		output, err := fn(c, *new(I))
 		if err != nil {
@@ -28,7 +28,7 @@ func (h ginHandler[Converter, I, O]) Handle(fn types.InputFunction[I, O]) func(*
 	}
 }
 
-func (h ginHandler[Converter, I, O]) HandleJSON(fn types.InputFunction[I, O]) func(*gin.Context) {
+func (h ginHandler[I, O]) HandleJSON(fn types.InputFunction[I, O]) func(*gin.Context) {
 	return func(c *gin.Context) {
 		var input I
 
@@ -51,7 +51,7 @@ func (h ginHandler[Converter, I, O]) HandleJSON(fn types.InputFunction[I, O]) fu
 	}
 }
 
-func (h ginHandler[Converter, I, O]) HandleParam(param string, fn types.InputFunction[I, O]) func(*gin.Context) {
+func (h ginHandler[I, O]) HandleParam(param string, fn types.InputFunction[I, O]) func(*gin.Context) {
 	return func(c *gin.Context) {
 		input := c.Param(param)
 
@@ -74,7 +74,7 @@ func (h ginHandler[Converter, I, O]) HandleParam(param string, fn types.InputFun
 	}
 }
 
-func (h ginHandler[Converter, I, O]) HandleQuery(query string, fn types.InputFunction[I, O]) func(*gin.Context) {
+func (h ginHandler[I, O]) HandleQuery(query string, fn types.InputFunction[I, O]) func(*gin.Context) {
 	return func(c *gin.Context) {
 		input := c.Query(query)
 
@@ -96,7 +96,7 @@ func (h ginHandler[Converter, I, O]) HandleQuery(query string, fn types.InputFun
 	}
 }
 
-func (ginHandler[Converter, I, O]) ginOutPut(ctx *gin.Context, output O, statusCode int) {
+func (ginHandler[I, O]) ginOutPut(ctx *gin.Context, output O, statusCode int) {
 	if output == *new(O) {
 		ctx.Status(statusCode)
 	}
@@ -104,9 +104,9 @@ func (ginHandler[Converter, I, O]) ginOutPut(ctx *gin.Context, output O, statusC
 	ctx.JSON(statusCode, output)
 }
 
-func NewGinHandler[Converter, I, O comparable](errorHandler customerrors.Errors, successHandler success.Success, convert ...converter.Converter[Converter]) types.GinHandler[Converter, I, O] {
+func NewGinHandler[I, O comparable](errorHandler customerrors.Errors, successHandler success.Success, convert ...converter.Converter[I]) types.GinHandler[I, O] {
 	if convert != nil {
-		return ginHandler[Converter, I, O]{errorHandler: errorHandler, successHandler: successHandler, convert: convert[0]}
+		return ginHandler[I, O]{errorHandler: errorHandler, successHandler: successHandler, convert: convert[0]}
 	}
-	return ginHandler[Converter, I, O]{errorHandler: errorHandler, successHandler: successHandler, convert: converter.Converter[Converter]{}}
+	return ginHandler[I, O]{errorHandler: errorHandler, successHandler: successHandler, convert: converter.Converter[I]{}}
 }
