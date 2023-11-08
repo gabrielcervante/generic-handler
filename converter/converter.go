@@ -1,52 +1,17 @@
 package converter
 
-import (
-	"fmt"
-)
-
-var (
-	convertWithError    map[string]any
-	convertWithoutError map[string]any
-)
-
-func AddConvertWithError[I, O any](converters ...func(string) (O, error)) {
-	var getType I
-
-	for _, converter := range converters {
-		if convertWithError == nil {
-			convertWithError = make(map[string]any)
-			convertWithError[fmt.Sprintf("%T", getType)] = converter
-		}
-
-		convertWithError[fmt.Sprintf("%T", getType)] = converter
-
-	}
+type Converter[O any] struct {
+	ConvertWithError    func(string) (O, error)
+	ConvertWithoutError func(string) O
 }
 
-func AddconvertWithoutError[I, O any](converters ...func(string) O) {
-	var getType I
-
-	for _, converter := range converters {
-		if convertWithoutError == nil {
-			convertWithoutError = make(map[string]any)
-			convertWithoutError[fmt.Sprintf("%T", getType)] = converter
-		}
-
-		convertWithoutError[fmt.Sprintf("%T", getType)] = converter
-	}
-}
-
-func Convert[O any](input string) (any, error) {
-	var getType O
-
-	toConvertWithError, ok := convertWithError[fmt.Sprintf("%T", getType)]
-	if ok {
-		return toConvertWithError.(func(string) (O, error))(input)
+func (c Converter[O]) Convert(input string) (any, error) {
+	if c.ConvertWithError != nil {
+		return c.ConvertWithError(input)
 	}
 
-	toConvertWithoutError, ok := convertWithoutError[fmt.Sprintf("%T", getType)]
-	if ok {
-		return toConvertWithoutError.(func(string) error)(input), nil
+	if c.ConvertWithoutError != nil {
+		return c.ConvertWithoutError(input), nil
 	}
 
 	return input, nil

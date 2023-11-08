@@ -3,7 +3,11 @@ package example
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
 
+	"github.com/gabrielcervante/handler/adapter"
+	"github.com/gabrielcervante/handler/converter"
 	customerrors "github.com/gabrielcervante/handler/custom_errors"
 	"github.com/gabrielcervante/handler/handlers"
 	"github.com/gabrielcervante/handler/success"
@@ -22,13 +26,17 @@ func FiberExample() {
 		customType{}: 200,
 	}, 505)
 
+	convert := converter.Converter[int]{ConvertWithError: strconv.Atoi}
+
 	r := fiber.New()
 
-	r.Get("/string/:str", handlers.NewFiberHandler[string, string](customErrors, successes).HandleParam("str", respondMessageString))
-	r.Get("/str", handlers.NewFiberHandler[string, string](customErrors, successes).HandleParam("string", errorMessageString))
-	r.Get("/int", handlers.NewFiberHandler[int, int](customErrors, successes).HandleQuery("integer", errorMessageInt))
+	r.Get("/string/:str", handlers.NewFiberHandler[string, string, string](customErrors, successes, converter.Converter[string]{}).HandleParam("str", respondMessageString))
+	r.Get("/str", handlers.NewFiberHandler[string, string, string](customErrors, successes, converter.Converter[string]{}).HandleParam("string", errorMessageString))
+	r.Get("/int", handlers.NewFiberHandler[int, int, int](customErrors, successes, convert).HandleQuery("integer", errorMessageInt))
+	r.Get("/int", handlers.NewFiberHandler[string, struct{}, string](customErrors, successes, converter.Converter[string]{}).Handle(adapter.NoInput[struct{}, string](testNoInput)))
+	r.Get("/int", handlers.NewFiberHandler[string, string, struct{}](customErrors, successes, converter.Converter[string]{}).HandleQuery("integer", adapter.NoOutput[string, struct{}](testNoOutput)))
 
-	postHandlers := handlers.NewFiberHandler[customType, customType](customErrors, successes)
+	postHandlers := handlers.NewFiberHandler[customType, customType, customType](customErrors, successes, converter.Converter[customType]{})
 
 	r.Post("/custom", postHandlers.HandleJSON(respondMessageCustomType))
 
@@ -49,13 +57,17 @@ func GinExample() {
 		customType{}: 200,
 	}, 505)
 
+	convert := converter.Converter[int]{ConvertWithError: strconv.Atoi}
+
 	r := gin.Default()
 
-	r.GET("/string/:str", handlers.NewGinHandler[string, string](customErrors, successes).HandleParam("str", respondMessageString))
-	r.GET("/str", handlers.NewGinHandler[string, string](customErrors, successes).HandleParam("string", errorMessageString))
-	r.GET("/int", handlers.NewGinHandler[int, int](customErrors, successes).HandleQuery("integer", errorMessageInt))
+	r.GET("/string/:str", handlers.NewGinHandler[string, string, string](customErrors, successes, converter.Converter[string]{}).HandleParam("str", respondMessageString))
+	r.GET("/str", handlers.NewGinHandler[string, string, string](customErrors, successes, converter.Converter[string]{}).HandleParam("string", errorMessageString))
+	r.GET("/int", handlers.NewGinHandler[int, int, int](customErrors, successes, convert).HandleQuery("integer", errorMessageInt))
+	r.GET("/int", handlers.NewGinHandler[struct{}, struct{}, string](customErrors, successes, converter.Converter[struct{}]{}).Handle(adapter.NoInput[struct{}, string](testNoInput)))
+	r.GET("/int", handlers.NewGinHandler[string, string, struct{}](customErrors, successes, converter.Converter[string]{}).HandleQuery("integer", adapter.NoOutput[string, struct{}](testNoOutput)))
 
-	postHandlers := handlers.NewGinHandler[customType, customType](customErrors, successes)
+	postHandlers := handlers.NewGinHandler[customType, customType, customType](customErrors, successes, converter.Converter[customType]{})
 
 	r.POST("/custom", postHandlers.HandleJSON(respondMessageCustomType))
 
@@ -83,4 +95,13 @@ type customType struct {
 
 func respondMessageCustomType(ctx context.Context, s customType) (customType, error) {
 	return s, nil
+}
+
+func testNoInput(ctx context.Context) (string, error) {
+	return "Nothing here", nil
+}
+
+func testNoOutput(ctx context.Context, input string) error {
+	fmt.Println(input)
+	return nil
 }
